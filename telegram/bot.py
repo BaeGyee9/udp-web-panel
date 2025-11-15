@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ZIVPN Telegram Bot - GitHub Version
-Downloaded from: https://github.com/nyeinkokoaung404/zi-panel/main/telegram/bot.py
+Downloaded from: https://github.com/BaeGyee9/udp-web-panel/main/telegram/bot.py
 """
 
 import telegram
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 # Configuration
 DATABASE_PATH = os.environ.get("DATABASE_PATH", "/etc/zivpn/zivpn.db")
-BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+BOT_TOKEN = os.environ.get("8561180756:AAHVoCuaWhZ4kjKMNK7NKutA_YXJr0eoSYs", "")
 
 def get_db():
     """Get database connection"""
