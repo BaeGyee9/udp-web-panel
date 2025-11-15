@@ -231,7 +231,7 @@ chmod 644 "$CFG" "$USERS"
 
 # ===== Download Web Panel from GitHub =====
 say "${Y}🌐 GitHub မှ Web Panel ဒေါင်းလုပ်ဆွဲနေပါတယ်...${Z}"
-curl -fsSL -o /etc/zivpn/web.py "https://raw.githubusercontent.com/nyeinkokoaung404/zi-panel/main/templates/web.py"
+curl -fsSL -o /etc/zivpn/web.py "https://raw.githubusercontent.com/BaeGyee9/udp-web-panel/main/templates/web.py"
 if [ $? -ne 0 ]; then
   echo -e "${R}❌ Web Panel ဒေါင်းလုပ်ဆွဲ၍မရပါ - Fallback သုံးပါမယ်${Z}"
   # Fallback web panel code would go here
@@ -239,7 +239,7 @@ fi
 
 # ===== Download Telegram Bot from GitHub =====
 say "${Y}🤖 GitHub မှ Telegram Bot ဒေါင်းလုပ်ဆွဲနေပါတယ်...${Z}"
-curl -fsSL -o /etc/zivpn/bot.py "https://raw.githubusercontent.com/nyeinkokoaung404/zi-panel/main/telegram/bot.py"
+curl -fsSL -o /etc/zivpn/bot.py "https://raw.githubusercontent.com/BaeGyee9/udp-web-panel/main/telegram/bot.py"
 if [ $? -ne 0 ]; then
   echo -e "${R}❌ Telegram Bot ဒေါင်းလုပ်ဆွဲ၍မရပါ - Fallback သုံးပါမယ်${Z}"
   # Fallback bot code would go here
