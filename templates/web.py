@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ZIVPN Enterprise Web Panel - External HTML Template
-Downloaded from: https://raw.githubusercontent.com/nyeinkokoaung404/zi-panel/main/templates/web.py
+Downloaded from: https://raw.githubusercontent.com/BaeGyee9/udp-web-panel/main/templates/web.py
 """
 
 from flask import Flask, jsonify, render_template_string, request, redirect, url_for, session, make_response, g
@@ -19,7 +19,7 @@ RECENT_SECONDS = 120
 LOGO_URL = "https://raw.githubusercontent.com/BaeGyee9/khaing/main/logo.png"
 
 # GitHub Template URL
-HTML_TEMPLATE_URL = "https://raw.githubusercontent.com/nyeinkokoaung404/zi-panel/main/templates/index.html"
+HTML_TEMPLATE_URL = "https://raw.githubusercontent.com/BaeGyee9/udp-web-panel/main/templates/index.html"
 
 # --- Localization Data ---
 TRANSLATIONS = {
