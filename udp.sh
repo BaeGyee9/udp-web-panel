@@ -9,7 +9,7 @@ B="\e[1;34m"; G="\e[1;32m"; Y="\e[1;33m"; R="\e[1;31m"; C="\e[1;36m"; M="\e[1;35
 LINE="${B}────────────────────────────────────────────────────────${Z}"
 say(){ echo -e "$1"; }
 
-echo -e "\n$LINE\n${G}🌟 ZIVPN UDP Server + Web UI - ENTERPRISE EDITION ${Z}\n${M}🧑‍💻 Script By 4 0 4 \ 2.0 [🇲🇲] ${Z}\n$LINE"
+echo -e "\n$LINE\n${G}🌟 ZIVPN UDP Server + Web UI - ENTERPRISE EDITION ${Z}\n${M}🧑‍💻 Script By မောင်သုည [🇲🇲] ${Z}\n$LINE"
 
 # ===== Root check & apt guards =====
 if [ "$(id -u)" -ne 0 ]; then
@@ -779,7 +779,7 @@ systemctl restart zivpn.service
 # ===== Completion Message =====
 IP=$(hostname -I | awk '{print $1}')
 echo -e "\n$LINE\n${G}✅ ZIVPN Enterprise Edition Completed!${Z}"
-echo -e "${C}🌐 WEB PANEL:${Z} ${Y}http://$IP:8080${Z}"
+echo -e "${C}🌐 WEB PANEL:${Z} ${Y}http://$IP:57621${Z}"
 # echo -e "  ${C}Login:${Z} ${Y}$WEB_USER / $WEB_PASS${Z}"
 echo -e "\n${G}🔐 LOGIN CREDENTIALS${Z}"
 echo -e "  ${Y}• Username:${Z} ${Y}$WEB_USER${Z}"
