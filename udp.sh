@@ -789,3 +789,4 @@ echo -e "  ${Y}systemctl status zivpn-web${Z}      - Web Panel"
 echo -e "  ${Y}systemctl status zivpn-bot${Z}      - Telegram Bot"
 echo -e "  ${Y}systemctl status zivpn-connection${Z} - Connection Manager"
 echo -e "$LINE"
+
