@@ -3,7 +3,7 @@
 ZIVPN Telegram Bot - GitHub Version
 """
 import telegram
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext import Updater, CommandHandler, MessageHandler, filters
 import sqlite3
 import logging
 import os
