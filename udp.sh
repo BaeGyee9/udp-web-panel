@@ -1,6 +1,6 @@
 #!/bin/bash
 # ZIVPN UDP Server + Web UI (Myanmar) - ENTERPRISE EDITION
-# Author: 4 0 4 \ 2.0 [🇲🇲]
+# Author: မောင်သုည [🇲🇲]
 # Features: Complete Enterprise Management System with Bandwidth Control, Billing, Multi-Server, API, etc.
 set -euo pipefail
 
