@@ -789,3 +789,14 @@ echo -e "  ${Y}systemctl status zivpn-web${Z}      - Web Panel"
 echo -e "  ${Y}systemctl status zivpn-bot${Z}      - Telegram Bot"
 echo -e "  ${Y}systemctl status zivpn-connection${Z} - Connection Manager"
 echo -e "$LINE"
+
+# ... existing code ...
+
+# Create update script for future use
+cat > /usr/local/bin/zivpn-update << 'EOF'
+#!/bin/bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Baegyee9/udp-web-panel/main/update.sh)
+EOF
+chmod +x /usr/local/bin/zivpn-update
+
+echo "Update command available: zivpn-update"
