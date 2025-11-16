@@ -22,7 +22,7 @@ DATABASE_PATH = os.environ.get("DATABASE_PATH", "/etc/zivpn/zivpn.db")
 BOT_TOKEN = "8561180756:AAHVoCuaWhZ4kjKMNK7NKutA_YXJr0eoSYs"
 
 # Admin configuration - ONLY YOUR ID CAN SEE ADMIN COMMANDS
-ADMIN_IDS = [7240495054]  # ညီ့ Telegram ID
+ADMIN_IDS = [7240495054]  # Telegram ID
 
 def get_server_ip():
     """Get server IP address"""
