@@ -9,6 +9,9 @@ import logging
 import os
 from datetime import datetime, timedelta
 import socket
+import json
+import tempfile
+import subprocess
 
 # Configure logging
 logging.basicConfig(
@@ -20,9 +23,66 @@ logger = logging.getLogger(__name__)
 # Configuration
 DATABASE_PATH = os.environ.get("DATABASE_PATH", "/etc/zivpn/zivpn.db")
 BOT_TOKEN = "8514909413:AAETX4LGVYd3HR-O2Yr38OJdQmW3hGrEBF0"
+CONFIG_FILE = "/etc/zivpn/config.json"
 
 # Admin configuration - ONLY YOUR ID CAN SEE ADMIN COMMANDS
 ADMIN_IDS = [7576434717, 7240495054]  # Telegram ID
+
+# ===== SYNC CONFIG FUNCTIONS =====
+def read_json(path, default):
+    try:
+        with open(path,"r") as f: return json.load(f)
+    except Exception:
+        return default
+
+def write_json_atomic(path, data):
+    d=json.dumps(data, ensure_ascii=False, indent=2)
+    dirn=os.path.dirname(path); fd,tmp=tempfile.mkstemp(prefix=".tmp-", dir=dirn)
+    try:
+        with os.fdopen(fd,"w") as f: f.write(d)
+        os.replace(tmp,path)
+    finally:
+        try: os.remove(tmp)
+        except: pass
+
+def sync_config_passwords():
+    """Sync passwords from database to ZIVPN config"""
+    db = get_db()
+    try:
+        # Get all active users' passwords
+        active_users = db.execute('''
+            SELECT password FROM users 
+            WHERE status = "active" AND password IS NOT NULL AND password != "" 
+                  AND (expires IS NULL OR expires >= CURRENT_DATE)
+        ''').fetchall()
+        
+        # Extract unique passwords
+        users_pw = sorted({str(u["password"]) for u in active_users})
+        
+        # Update config file
+        cfg = read_json(CONFIG_FILE, {})
+        if not isinstance(cfg.get("auth"), dict): 
+            cfg["auth"] = {}
+        
+        cfg["auth"]["mode"] = "passwords"
+        cfg["auth"]["config"] = users_pw
+        
+        write_json_atomic(CONFIG_FILE, cfg)
+        
+        # Restart ZIVPN service to apply changes
+        result = subprocess.run("systemctl restart zivpn.service", shell=True, capture_output=True, text=True, timeout=30)
+        if result.returncode == 0:
+            logger.info("ZIVPN service restarted successfully for config sync")
+            return True
+        else:
+            logger.error(f"Failed to restart ZIVPN service: {result.stderr}")
+            return False
+            
+    except Exception as e:
+        logger.error(f"Error syncing passwords: {e}")
+        return False
+    finally:
+        db.close()
 
 def get_server_ip():
     """Get server IP address"""
@@ -215,7 +275,9 @@ def adduser_command(update, context):
         ''', (username, password, expiry_date))
         db.commit()
         
-        success_text = f"""
+        # ✅ SYNC PASSWORDS TO ZIVPN CONFIG
+        if sync_config_passwords():
+            success_text = f"""
 ✅ *User Added Successfully*
 
 🌐 Server: `{server_ip}`
@@ -224,7 +286,21 @@ def adduser_command(update, context):
 📊 Status: Active
 ⏰ Expires: {expiry_date}
 🔗 Connections: 1
-        """
+
+*User can now connect to VPN immediately*
+"""
+        else:
+            success_text = f"""
+⚠️ *User Added But Sync Warning*
+
+👤 Username: `{username}`
+🔐 Password: `{password}`
+⏰ Expires: {expiry_date}
+
+💡 User added to database but ZIVPN sync had issues.
+   User may need to wait a moment to connect.
+"""
+        
         update.message.reply_text(success_text, parse_mode='Markdown')
         logger.info(f"User {username} added by admin {update.effective_user.id}")
         
@@ -259,6 +335,9 @@ def changepass_command(update, context):
         db.execute('UPDATE users SET password = ? WHERE username = ?', (new_password, username))
         db.commit()
         
+        # ✅ SYNC PASSWORDS TO ZIVPN CONFIG
+        sync_config_passwords()
+        
         update.message.reply_text(f"✅ Password changed for *{username}*\n🔐 New Password: `{new_password}`", parse_mode='Markdown')
         logger.info(f"User {username} password changed by admin {update.effective_user.id}")
         
@@ -291,6 +370,9 @@ def deluser_command(update, context):
         db.execute('DELETE FROM users WHERE username = ?', (username,))
         db.commit()
         
+        # ✅ SYNC PASSWORDS TO ZIVPN CONFIG
+        sync_config_passwords()
+        
         update.message.reply_text(f"✅ User `{username}` deleted")
         logger.info(f"User {username} deleted by admin {update.effective_user.id}")
         
@@ -315,6 +397,10 @@ def suspend_command(update, context):
     try:
         db.execute('UPDATE users SET status = "suspended" WHERE username = ?', (username,))
         db.commit()
+        
+        # ✅ SYNC PASSWORDS TO ZIVPN CONFIG
+        sync_config_passwords()
+        
         update.message.reply_text(f"✅ User *{username}* suspended\n\n🔓 Unsuspend: /activate {username}")
         logger.info(f"User {username} suspended by admin {update.effective_user.id}")
     except Exception as e:
@@ -338,6 +424,10 @@ def activate_command(update, context):
     try:
         db.execute('UPDATE users SET status = "active" WHERE username = ?', (username,))
         db.commit()
+        
+        # ✅ SYNC PASSWORDS TO ZIVPN CONFIG
+        sync_config_passwords()
+        
         update.message.reply_text(f"✅ User *{username}* activated")
         logger.info(f"User {username} activated by admin {update.effective_user.id}")
     except Exception as e:
@@ -361,6 +451,10 @@ def ban_user(update, context):
     try:
         db.execute('UPDATE users SET status = "banned" WHERE username = ?', (username,))
         db.commit()
+        
+        # ✅ SYNC PASSWORDS TO ZIVPN CONFIG
+        sync_config_passwords()
+        
         update.message.reply_text(f"✅ User *{username}* banned\n\n🔓 Unban: /unban {username}")
         logger.info(f"User {username} banned by admin {update.effective_user.id}")
     except Exception as e:
@@ -384,6 +478,10 @@ def unban_user(update, context):
     try:
         db.execute('UPDATE users SET status = "active" WHERE username = ?', (username,))
         db.commit()
+        
+        # ✅ SYNC PASSWORDS TO ZIVPN CONFIG
+        sync_config_passwords()
+        
         update.message.reply_text(f"✅ User *{username}* unbanned")
         logger.info(f"User {username} unbanned by admin {update.effective_user.id}")
     except Exception as e:
