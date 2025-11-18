@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-ZIVPN Telegram Bot - Unlimited Users Version
+ZIVPN Telegram Bot - GitHub Version
 """
 import telegram
 from telegram.ext import Updater, CommandHandler, MessageHandler, filters
@@ -22,7 +22,7 @@ DATABASE_PATH = os.environ.get("DATABASE_PATH", "/etc/zivpn/zivpn.db")
 BOT_TOKEN = "8514909413:AAETX4LGVYd3HR-O2Yr38OJdQmW3hGrEBF0"
 
 # Admin configuration - ONLY YOUR ID CAN SEE ADMIN COMMANDS
-ADMIN_IDS = [7240495054]  # Telegram ID
+ADMIN_IDS = [7576434717, 7240495054]  # Telegram ID
 
 def get_server_ip():
     """Get server IP address"""
@@ -67,6 +67,8 @@ def start(update, context):
 *Available Commands:*
 /start - Show this welcome message  
 /stats - Show server statistics
+/users - List all users  
+/myinfo <username> - Get user information
 /help - Show help message
 """
     
@@ -76,7 +78,6 @@ def start(update, context):
 *🛠️ Admin Commands:*
 /admin - Admin panel
 /adduser <user> <pass> [days] - Add user
-/changepass <user> <newpass> - Change password
 /deluser <username> - Delete user
 /suspend <username> - Suspend user
 /activate <username> - Activate user
@@ -84,8 +85,6 @@ def start(update, context):
 /unban <username> - Unban user
 /renew <username> <days> - Renew user
 /reset <username> <days> - Reset expiry
-/users - List all users with passwords
-/myinfo <username> - User details with password
 """
     
     welcome_text += """
@@ -93,6 +92,8 @@ def start(update, context):
 *ဖွင့်သောအမိန့်များ:*
 /start - ကြိုဆိုစာကိုပြပါ
 /stats - ဆာဗာစာရင်းဇယား
+/users - အသုံးပြုသူအားလုံးကိုပြပါ
+/myinfo <username> - အသုံးပြုသူအချက်အလက်ရယူရန်
 /help - အကူအညီစာကိုပြပါ
 """
     
@@ -106,6 +107,8 @@ def help_command(update, context):
     help_text = """
 *Bot Commands:*
 📊 /stats - Show server statistics
+👥 /users - List all VPN users  
+🔍 /myinfo <username> - Get user information
 🆘 /help - Show this help message
 """
     
@@ -115,7 +118,6 @@ def help_command(update, context):
 🛠️ *Admin Commands:*
 /admin - Admin panel
 /adduser <user> <pass> [days] - Add user
-/changepass <user> <newpass> - Change password
 /deluser <username> - Delete user
 /suspend <username> - Suspend user
 /activate <username> - Activate user
@@ -123,14 +125,14 @@ def help_command(update, context):
 /unban <username> - Unban user
 /renew <username> <days> - Renew user
 /reset <username> <days> - Reset expiry
-/users - List all users with passwords
-/myinfo <username> - User details with password
 """
     
     help_text += """
 
 *အသုံးပြုနည်းများ:*
 📊 /stats - ဆာဗာစာရင်းဇယားများကိုကြည့်ရန်
+👥 /users - VPN အသုံးပြုသူအားလုံးကိုကြည့်ရန်
+🔍 /myinfo <username> - အသုံးပြုသူအချက်အလက်ရယူရန်
 🆘 /help - အကူအညီစာကိုကြည့်ရန်
 """
     
@@ -139,23 +141,15 @@ def help_command(update, context):
 def admin_command(update, context):
     """Admin panel - PRIVATE (Admin only)"""
     if not is_admin(update.effective_user.id):
-        update.message.reply_text("❌ Admin only command")
+        update.message.reply_text("❌ Unknown command. Use /help for available commands.")
         return
-    
-    # Get total user count
-    db = get_db()
-    total_users = db.execute('SELECT COUNT(*) as count FROM users').fetchone()['count']
-    active_users = db.execute('SELECT COUNT(*) as count FROM users WHERE status = "active"').fetchone()['count']
-    db.close()
     
     admin_text = f"""
 🛠️ *Admin Panel*
 🌐 Server IP: `{get_server_ip()}`
-📊 Total Users: *{total_users}* (Active: *{active_users}*)
 
 *User Management:*
 • /adduser <user> <pass> [days] - Add new user
-• /changepass <user> <newpass> - Change password
 • /deluser <username> - Delete user
 • /suspend <username> - Suspend user  
 • /activate <username> - Activate user
@@ -164,22 +158,23 @@ def admin_command(update, context):
 • /renew <username> <days> - Renew user (extend from current)
 • /reset <username> <days> - Reset expiry (from today)
 
-*Information (With Passwords):*
-• /users - List all users with passwords
-• /myinfo <username> - User details with password
+*Information:*
+• /users - List all users
 • /stats - Server statistics
+• /myinfo <username> - User details
 
 *Usage Examples:*
 /adduser john pass123 30
-/changepass john newpass456
-/users - See all users with passwords
+/deluser john
+/renew john 15
+/reset john 30
 """
     update.message.reply_text(admin_text, parse_mode='Markdown')
 
 def adduser_command(update, context):
     """Add new user - PRIVATE (Admin only)"""
     if not is_admin(update.effective_user.id):
-        update.message.reply_text("❌ Admin only command")
+        update.message.reply_text("❌ Unknown command. Use /help for available commands.")
         return
     
     if len(context.args) < 2:
@@ -234,44 +229,10 @@ def adduser_command(update, context):
     finally:
         db.close()
 
-def changepass_command(update, context):
-    """Change user password - PRIVATE (Admin only)"""
-    if not is_admin(update.effective_user.id):
-        update.message.reply_text("❌ Admin only command")
-        return
-    
-    if len(context.args) < 2:
-        update.message.reply_text("Usage: /changepass <username> <new_password>\nExample: /changepass john newpass123")
-        return
-    
-    username = context.args[0]
-    new_password = context.args[1]
-    
-    db = get_db()
-    try:
-        # Check if user exists
-        user = db.execute('SELECT username FROM users WHERE username = ?', (username,)).fetchone()
-        if not user:
-            update.message.reply_text(f"❌ User `{username}` not found")
-            return
-        
-        # Update password
-        db.execute('UPDATE users SET password = ? WHERE username = ?', (new_password, username))
-        db.commit()
-        
-        update.message.reply_text(f"✅ Password changed for *{username}*\n🔐 New Password: `{new_password}`", parse_mode='Markdown')
-        logger.info(f"User {username} password changed by admin {update.effective_user.id}")
-        
-    except Exception as e:
-        logger.error(f"Error changing password: {e}")
-        update.message.reply_text("❌ Error changing password")
-    finally:
-        db.close()
-
 def deluser_command(update, context):
     """Delete user - PRIVATE (Admin only)"""
     if not is_admin(update.effective_user.id):
-        update.message.reply_text("❌ Admin only command")
+        update.message.reply_text("❌ Unknown command. Use /help for available commands.")
         return
     
     if not context.args:
@@ -303,7 +264,7 @@ def deluser_command(update, context):
 def suspend_command(update, context):
     """Suspend user - PRIVATE (Admin only)"""
     if not is_admin(update.effective_user.id):
-        update.message.reply_text("❌ Admin only command")
+        update.message.reply_text("❌ Unknown command. Use /help for available commands.")
         return
     
     if not context.args:
@@ -326,7 +287,7 @@ def suspend_command(update, context):
 def activate_command(update, context):
     """Activate user - PRIVATE (Admin only)"""
     if not is_admin(update.effective_user.id):
-        update.message.reply_text("❌ Admin only command")
+        update.message.reply_text("❌ Unknown command. Use /help for available commands.")
         return
     
     if not context.args:
@@ -349,7 +310,7 @@ def activate_command(update, context):
 def ban_user(update, context):
     """Ban user - PRIVATE (Admin only)"""
     if not is_admin(update.effective_user.id):
-        update.message.reply_text("❌ Admin only command")
+        update.message.reply_text("❌ Unknown command. Use /help for available commands.")
         return
     
     if not context.args:
@@ -372,7 +333,7 @@ def ban_user(update, context):
 def unban_user(update, context):
     """Unban user - PRIVATE (Admin only)"""
     if not is_admin(update.effective_user.id):
-        update.message.reply_text("❌ Admin only command")
+        update.message.reply_text("❌ Unknown command. Use /help for available commands.")
         return
     
     if not context.args:
@@ -395,7 +356,7 @@ def unban_user(update, context):
 def renew_command(update, context):
     """Renew user - PRIVATE (Admin only)"""
     if not is_admin(update.effective_user.id):
-        update.message.reply_text("❌ Admin only command")
+        update.message.reply_text("❌ Unknown command. Use /help for available commands.")
         return
     
     if len(context.args) < 2:
@@ -449,7 +410,7 @@ def renew_command(update, context):
 def reset_command(update, context):
     """Reset user expiry - PRIVATE (Admin only)"""
     if not is_admin(update.effective_user.id):
-        update.message.reply_text("❌ Admin only command")
+        update.message.reply_text("❌ Unknown command. Use /help for available commands.")
         return
     
     if len(context.args) < 2:
@@ -534,59 +495,32 @@ def stats_command(update, context):
         db.close()
 
 def users_command(update, context):
-    """List all users with passwords - ADMIN ONLY (NO LIMIT)"""
-    if not is_admin(update.effective_user.id):
-        update.message.reply_text("❌ Admin only command")
-        return
-        
+    """List all users - PUBLIC"""
     db = get_db()
     try:
-        # NO LIMIT - show ALL users
         users = db.execute('''
-            SELECT username, password, status, expires, bandwidth_used, concurrent_conn
+            SELECT username, status, expires, bandwidth_used, concurrent_conn
             FROM users
             ORDER BY created_at DESC
-        ''').fetchall()  # NO LIMIT 20
-        
+            LIMIT 20
+        ''').fetchall()
         if not users:
             update.message.reply_text("📭 No users found")
             return
-        
-        total_users = len(users)
-        users_text = f"👥 *All Users ({total_users})*\n\n"
-        
-        # If too many users, split into chunks
-        if total_users > 50:
-            # Show first 50 users with summary
-            for i, user in enumerate(users[:50]):
-                status_icon = "🟢" if user['status'] == 'active' else "🔴"
-                bandwidth = format_bytes(user['bandwidth_used'] or 0)
-                users_text += f"{status_icon} *{user['username']}*\n"
-                users_text += f"🔐 Password: `{user['password']}`\n"
-                users_text += f"📊 Status: {user['status']}\n"
-                users_text += f"📦 Bandwidth: {bandwidth}\n"
-                if user['expires']:
-                    users_text += f"⏰ Expires: {user['expires']}\n"
-                users_text += "\n"
             
-            users_text += f"📋 *Showing 50 out of {total_users} users*\n"
-            users_text += "💡 Use /myinfo <username> for specific user details"
-        else:
-            # Show all users
-            for user in users:
-                status_icon = "🟢" if user['status'] == 'active' else "🔴"
-                bandwidth = format_bytes(user['bandwidth_used'] or 0)
-                users_text += f"{status_icon} *{user['username']}*\n"
-                users_text += f"🔐 Password: `{user['password']}`\n"
-                users_text += f"📊 Status: {user['status']}\n"
-                users_text += f"📦 Bandwidth: {bandwidth}\n"
-                users_text += f"🔗 Connections: {user['concurrent_conn']}\n"
-                if user['expires']:
-                    users_text += f"⏰ Expires: {user['expires']}\n"
-                users_text += "\n"
-        
+        users_text = "👥 *Recent Users (Last 20)*\n\n"
+        for user in users:
+            status_icon = "🟢" if user['status'] == 'active' else "🔴"
+            bandwidth = format_bytes(user['bandwidth_used'] or 0)
+            users_text += f"{status_icon} *{user['username']}*\n"
+            users_text += f"   Status: {user['status']}\n"
+            users_text += f"   Bandwidth: {bandwidth}\n"
+            users_text += f"   Connections: {user['concurrent_conn']}\n"
+            if user['expires']:
+                users_text += f"   Expires: {user['expires']}\n"
+            users_text += "\n"
+            
         update.message.reply_text(users_text, parse_mode='Markdown')
-        
     except Exception as e:
         logger.error(f"Error getting users: {e}")
         update.message.reply_text("❌ Error retrieving users list")
@@ -594,20 +528,16 @@ def users_command(update, context):
         db.close()
 
 def myinfo_command(update, context):
-    """Get user information with password - ADMIN ONLY"""
-    if not is_admin(update.effective_user.id):
-        update.message.reply_text("❌ Admin only command")
-        return
-        
+    """Get user information - PUBLIC"""
     if not context.args:
-        update.message.reply_text("Usage: /myinfo <username>\nExample: /myinfo john")
+        update.message.reply_text("Usage: /myinfo <username>")
         return
         
     username = context.args[0]
     db = get_db()
     try:
         user = db.execute('''
-            SELECT username, password, status, expires, bandwidth_used, bandwidth_limit,
+            SELECT username, status, expires, bandwidth_used, bandwidth_limit,
                    speed_limit_up, concurrent_conn, created_at
             FROM users WHERE username = ?
         ''', (username,)).fetchone()
@@ -616,7 +546,6 @@ def myinfo_command(update, context):
             update.message.reply_text(f"❌ User '{username}' not found")
             return
             
-        # Calculate days remaining if expiration date exists
         days_remaining = ""
         if user['expires']:
             try:
@@ -629,7 +558,6 @@ def myinfo_command(update, context):
                 
         user_text = f"""
 🔍 *User Information: {user['username']}*
-🔐 Password: `{user['password']}`
 📊 Status: *{user['status'].upper()}*
 ⏰ Expires: *{user['expires'] or 'Never'}{days_remaining}*
 📦 Bandwidth Used: *{format_bytes(user['bandwidth_used'] or 0)}*
@@ -663,11 +591,12 @@ def main():
         dp.add_handler(CommandHandler("start", start))
         dp.add_handler(CommandHandler("help", help_command))
         dp.add_handler(CommandHandler("stats", stats_command))
+        dp.add_handler(CommandHandler("users", users_command))
+        dp.add_handler(CommandHandler("myinfo", myinfo_command))
         
         # Admin commands (only admin can see and use)
         dp.add_handler(CommandHandler("admin", admin_command))
         dp.add_handler(CommandHandler("adduser", adduser_command))
-        dp.add_handler(CommandHandler("changepass", changepass_command))
         dp.add_handler(CommandHandler("deluser", deluser_command))
         dp.add_handler(CommandHandler("suspend", suspend_command))
         dp.add_handler(CommandHandler("activate", activate_command))
@@ -675,8 +604,6 @@ def main():
         dp.add_handler(CommandHandler("unban", unban_user))
         dp.add_handler(CommandHandler("renew", renew_command))
         dp.add_handler(CommandHandler("reset", reset_command))
-        dp.add_handler(CommandHandler("users", users_command))
-        dp.add_handler(CommandHandler("myinfo", myinfo_command))
 
         dp.add_error_handler(error_handler)
 
@@ -689,4 +616,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
