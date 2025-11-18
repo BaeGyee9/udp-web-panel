@@ -590,7 +590,8 @@ After=network.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/etc/zivpn
+EnvironmentFile=-/etc/zivpn/web.env
+Environment=WEB_PORT=19432  # ✅ ဒီမှာ ပြောင်းပါ
 ExecStart=/usr/local/bin/zivpn server -c /etc/zivpn/config.json
 Restart=always
 RestartSec=3
@@ -779,7 +780,7 @@ systemctl restart zivpn.service
 # ===== Completion Message =====
 IP=$(hostname -I | awk '{print $1}')
 echo -e "\n$LINE\n${G}✅ ZIVPN Enterprise Edition Completed!${Z}"
-echo -e "${C}🌐 WEB PANEL:${Z} ${Y}http://$IP:8080${Z}"
+echo -e "${C}🌐 WEB PANEL:${Z} ${Y}http://$IP:19432${Z}"
 # echo -e "  ${C}Login:${Z} ${Y}$WEB_USER / $WEB_PASS${Z}"
 echo -e "\n${G}🔐 LOGIN CREDENTIALS${Z}"
 echo -e "  ${Y}• Username:${Z} ${Y}$WEB_USER${Z}"
