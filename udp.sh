@@ -590,8 +590,7 @@ After=network.target
 [Service]
 Type=simple
 User=root
-EnvironmentFile=-/etc/zivpn/web.env
-Environment=WEB_PORT=19432  # ✅ ဒီမှာ ပြောင်းပါ
+WorkingDirectory=/etc/zivpn
 ExecStart=/usr/local/bin/zivpn server -c /etc/zivpn/config.json
 Restart=always
 RestartSec=3
@@ -754,7 +753,7 @@ ufw allow 1:65535/udp >/dev/null 2>&1 || true
 # ufw allow 22/tcp >/dev/null 2>&1 || true
 # ufw allow 5667/udp >/dev/null 2>&1 || true
 # ufw allow 6000:19999/udp >/dev/null 2>&1 || true
-# ufw allow 19432/tcp >/dev/null 2>&1 || true
+# ufw allow 8080/tcp >/dev/null 2>&1 || true
 # ufw allow 8081/tcp >/dev/null 2>&1 || true
 ufw --force enable >/dev/null 2>&1 || true
 
@@ -780,7 +779,7 @@ systemctl restart zivpn.service
 # ===== Completion Message =====
 IP=$(hostname -I | awk '{print $1}')
 echo -e "\n$LINE\n${G}✅ ZIVPN Enterprise Edition Completed!${Z}"
-echo -e "${C}🌐 WEB PANEL:${Z} ${Y}http://$IP:19432${Z}"
+echo -e "${C}🌐 WEB PANEL:${Z} ${Y}http://$IP:8080${Z}"
 # echo -e "  ${C}Login:${Z} ${Y}$WEB_USER / $WEB_PASS${Z}"
 echo -e "\n${G}🔐 LOGIN CREDENTIALS${Z}"
 echo -e "  ${Y}• Username:${Z} ${Y}$WEB_USER${Z}"
