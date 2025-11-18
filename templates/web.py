@@ -612,4 +612,6 @@ def update_user():
     return jsonify({"ok": False, "err": "Invalid data"})
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    web_port = int(os.environ.get("WEB_PORT", "19432"))  # ✅ ပြောင်းပါ
+    app.run(host="0.0.0.0", port=web_port)
+    
