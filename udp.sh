@@ -753,7 +753,7 @@ ufw allow 1:65535/udp >/dev/null 2>&1 || true
 # ufw allow 22/tcp >/dev/null 2>&1 || true
 # ufw allow 5667/udp >/dev/null 2>&1 || true
 # ufw allow 6000:19999/udp >/dev/null 2>&1 || true
-# ufw allow 8080/tcp >/dev/null 2>&1 || true
+# ufw allow 19432/tcp >/dev/null 2>&1 || true
 # ufw allow 8081/tcp >/dev/null 2>&1 || true
 ufw --force enable >/dev/null 2>&1 || true
 
